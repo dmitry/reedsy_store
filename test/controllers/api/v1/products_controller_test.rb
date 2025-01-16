@@ -1,8 +1,7 @@
 require "test_helper"
 
 class Api::V1::ProductsControllerTest < ActionDispatch::IntegrationTest
-  fixtures(:products)
-
+  # index
   test "returns all products" do
     get api_v1_products_url
     assert_response :success
@@ -28,5 +27,57 @@ class Api::V1::ProductsControllerTest < ActionDispatch::IntegrationTest
 
     json_response = JSON.parse(response.body)
     assert_empty json_response
+  end
+
+  # update
+  test "updates a product with price" do
+    patch api_v1_product_url(
+            id: products(:mug),
+            product: {
+              code: "change",
+              name: "new",
+              price: 10.884
+            }
+          )
+    assert_response :success
+
+    json = response.parsed_body
+    @mug = products(:mug)
+    assert_equal(
+      json,
+      {
+        "id" => @mug.id,
+        "code" => @mug.code,
+        "name" => @mug.name,
+        "price" => "10.88"
+      }
+    )
+
+    assert_equal @mug.reload.price.to_s, "10.88"
+  end
+
+  test "returns validation errors for product with wrong price" do
+    patch api_v1_product_url(
+            id: products(:mug),
+            product: {
+              price: -2
+            }
+          )
+    assert_response :unprocessable_entity
+
+    json = response.parsed_body
+    @mug = products(:mug)
+    assert_equal(
+      json,
+      {
+        "errors" => {
+          "price" => [
+            "must be greater than 0"
+          ]
+        }
+      }
+    )
+
+    assert_equal @mug.reload.price.to_s, "6.0"
   end
 end
