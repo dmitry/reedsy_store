@@ -16,7 +16,7 @@ class Product::CalculateTest < ActiveSupport::TestCase
       "items[2].quantity": [ "must be greater than 0" ],
       "items[3].product": [ "can't be blank" ]
     }
-    assert_equal calculation.errors.messages, errors
+    assert_equal errors, calculation.errors.messages
     assert_raise ActiveModel::ValidationError do
       calculation.result
     end
@@ -31,36 +31,42 @@ class Product::CalculateTest < ActiveSupport::TestCase
       ]
     )
     assert calculation.valid?
-    assert_equal calculation.errors.messages, {}
+    assert_equal({}, calculation.errors.messages)
     assert_equal(
-      calculation.result,
-      items: [
-        {
-          id: products(:mug).id,
-          quantity: 2,
-          prices: {
-            per_item: 6.00,
-            total: 12.00
+      {
+        items: [
+          {
+            id: products(:mug).id,
+            quantity: 2,
+            prices: {
+              per_item: "6.0",
+              total: "12.0",
+              total_raw: "12.0"
+            }
+          },
+          {
+            id: products(:hoodie).id,
+            quantity: 1,
+            prices: {
+              per_item: "20.0",
+              total: "20.0",
+              total_raw: "20.0"
+            }
+          },
+          {
+            id: products(:tshirt).id,
+            quantity: 5,
+            prices: {
+              per_item: "15.0",
+              total: "52.5",
+              total_raw: "75.0"
+            }
           }
-        },
-        {
-          id: products(:hoodie).id,
-          quantity: 1,
-          prices: {
-            per_item: 20.00,
-            total: 20.00
-          }
-        },
-        {
-          id: products(:tshirt).id,
-          quantity: 5,
-          prices: {
-            per_item: 15.00,
-            total: 75.00
-          }
-        }
-      ],
-      total_price: 107.00
+        ],
+        discounted_total: "84.5",
+        base_total: "107.0"
+      },
+      calculation.result
     )
   end
 end

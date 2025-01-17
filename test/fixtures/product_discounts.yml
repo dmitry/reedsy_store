@@ -1,0 +1,31 @@
+# TSHIRT: Single 30% discount for 3+ items
+tshirt_volume:
+  product: tshirt
+  min_quantity: 3
+  percentage: 30.00
+
+# MUG: Staggered discounts 
+mug_volume_10:
+  product: mug
+  min_quantity: 10
+  percentage: 2.00
+
+mug_volume_20:
+  product: mug
+  min_quantity: 20
+  percentage: 4.00
+
+mug_volume_30:
+  product: mug
+  min_quantity: 30
+  percentage: 6.00
+
+mug_volume_40:
+  product: mug
+  min_quantity: 40
+  percentage: 8.00
+
+mug_volume_150:
+  product: mug
+  min_quantity: 150
+  percentage: 30.00

@@ -57,18 +57,18 @@ class ProductTest < ActiveSupport::TestCase
 
     product.price = "0.085"
     assert product.valid?
-    assert_equal product.price, BigDecimal("0.09")
+    assert_equal BigDecimal("0.09"), product.price
 
     product.price = "0.084"
     assert product.valid?
-    assert_equal product.price, BigDecimal("0.08")
+    assert_equal BigDecimal("0.08"), product.price
   end
 
   test "as_json should return the correct format" do
     product = products(:mug)
     json = product.as_json
 
-    assert_equal product.id, json[:id]
+    assert_equal json[:id], product.id
     assert_equal "MUG", json[:code]
     assert_equal "Reedsy Mug", json[:name]
     assert_equal "6.0", json[:price]

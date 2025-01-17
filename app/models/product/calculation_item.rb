@@ -19,8 +19,12 @@ class Product::CalculationItem
     @product ||= Product.find_by(id: id)
   end
 
-  def total_price
-    @total_price ||= total_price_without_cache
+  def discounted_price
+    @discounted_price ||= discounted_price_without_cache
+  end
+
+  def base_price
+    @base_price ||= (product.price * quantity)
   end
 
   def as_json
@@ -28,17 +32,24 @@ class Product::CalculationItem
       id: id,
       quantity: quantity,
       prices: {
-        per_item: product.price,
-        total: total_price
+        per_item: product.price.to_s,
+        total: discounted_price.round(2).to_s,
+        total_raw: base_price.round(2).to_s
       }
     }
   end
 
   private
 
-  def total_price_without_cache
+  def discounted_price_without_cache
     return 0 unless product
 
-    product.price * quantity
+    discount = product.discount_for_quantity(quantity)
+
+    if discount
+      base_price * (1 - discount.percentage / 100.0)
+    else
+      base_price
+    end
   end
 end

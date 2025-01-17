@@ -1,3 +1,68 @@
+# Reedsy Store
+
+## Setup Instructions
+
+Requirements
+- Ruby 3.4+
+- SQLite3
+
+## Installation
+
+```aiignore
+git clone <repository-url>
+cd reedsy-store
+bundle install
+rails db:setup
+```
+
+## Running tests
+
+```bash
+rails test
+```
+
+## Running the server
+
+```bash
+rails server
+```
+
+## API Documentation
+
+### Endpoints
+
+#### GET /api/v1/products
+Returns list of all products.
+
+```bash
+curl -X GET http://localhost:3000/api/v1/products
+```
+
+#### PATCH /api/v1/products/:id
+Updates product price.
+
+```bash
+curl -X PATCH http://localhost:3000/api/v1/products/1 \
+  -H "Content-Type: application/json" \
+  -d '{"product":{"price":"7.50"}}'
+```
+
+#### POST /api/v1/products/calculate
+Calculates total price with discounts.
+
+[Look more](#question-4) for the other examples.
+
+```bash
+curl -X POST http://localhost:3000/api/v1/products/calculate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"id": 1, "quantity": 2},
+      {"id": 2, "quantity": 3}
+    ]
+  }'
+```
+
 # Technical decisions
 
 ## Architecture decisions
@@ -25,7 +90,31 @@ The default integer primary key was chosen over UUID for simplicity in this demo
 - Simplified database merging
 - Prevention of ID collisions
 
-### API Implementation
+### Product price calculation
+
+### ActiveModel implementation
+
+The application uses ActiveModel extensively to handle complex calculations and validations outside of ActiveRecord models. Here's how and why:
+
+#### Calculation logic with ActiveModel
+
+The calculation logic is implemented using two main classes:
+- `Product::Calculation` - Handles the overall price calculation for a cart
+- `Product::CalculationItem` - Represents individual items in the calculation
+
+This separation using ActiveModel provides several benefits:
+1. Keeps business logic separate from persistence models
+2. Enables complex validations without database overhead
+3. Provides a clean interface for the API layer
+4. Makes the code more testable with clear responsibilities
+
+The ActiveModel implementation was designed to be extensible for future needs:
+- Easy to add new discount types
+- Flexible for additional pricing rules
+- Simple to add new validation contexts
+- Ready for potential persistence if needed
+
+### API implementation
 
 #### Security considerations
 
@@ -201,9 +290,32 @@ Items: 1 MUG, 1 TSHIRT, 1 HOODIE
 Total: 41.00
 ```
 
+```bash
+curl -X POST "http://localhost:3000/api/v1/products/calculate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"id": 1, "quantity": 1},
+      {"id": 2, "quantity": 1},
+      {"id": 3, "quantity": 1}
+    ]
+  }'
+```
+
 ```
 Items: 9 MUG, 1 TSHIRT
 Total: 69.00
+```
+
+```bash
+curl -X POST "http://localhost:3000/api/v1/products/calculate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"id": 1, "quantity": 9},
+      {"id": 2, "quantity": 1}
+    ]
+  }'
 ```
 
 ```
@@ -216,6 +328,17 @@ Explanation:
   - Total: 75.00 - 1.20 = 73.80
 ```
 
+```bash
+curl -X POST "http://localhost:3000/api/v1/products/calculate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"id": 1, "quantity": 10},
+      {"id": 2, "quantity": 1}
+    ]
+  }'
+```
+
 ```
 Items: 45 MUG, 3 TSHIRT
 Total: 279.90
@@ -226,6 +349,17 @@ Explanation:
   - Total: 315.00 - 35.10 = 279.90
 ```
 
+```bash
+curl -X POST "http://localhost:3000/api/v1/products/calculate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"id": 1, "quantity": 45},
+      {"id": 2, "quantity": 3}
+    ]
+  }'
+```
+
 ```
 Items: 200 MUG, 4 TSHIRT, 1 HOODIE
 Total: 902.00
@@ -234,4 +368,16 @@ Explanation:
   - Total without discount: 1200.00 + 60.00 + 20.00 = 1280.00
   - Discount: 360.00 (30% discount on MUG) + 18.00 (30% discount on TSHIRT) = 378.00
   - Total: 1280.00 - 378.00 = 902.00
+```
+
+```bash
+curl -X POST "http://localhost:3000/api/v1/products/calculate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"id": 1, "quantity": 200},
+      {"id": 2, "quantity": 4},
+      {"id": 3, "quantity": 1}
+    ]
+  }'
 ```

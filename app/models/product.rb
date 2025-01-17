@@ -1,4 +1,6 @@
 class Product < ApplicationRecord
+  has_many :discounts, class_name: 'ProductDiscount', dependent: :destroy
+
   validates :code,
             presence: true,
             uniqueness: true,
@@ -19,7 +21,13 @@ class Product < ApplicationRecord
               allow_blank: true
             }
 
+
+
   normalizes :code, with: -> { it.upcase }
+
+  def discount_for_quantity(quantity)
+    discounts.for_quantity(quantity).first
+  end
 
   def as_json(options = {})
     {

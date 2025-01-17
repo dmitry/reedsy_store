@@ -16,14 +16,19 @@ class Product::Calculation
 
     {
       items: items.map(&:as_json),
-      total_price: total_price
+      discounted_total: discounted_price.to_s,
+      base_total: base_price.to_s
     }
   end
 
   private
 
-  def total_price
-    items.sum(&:total_price)
+  def discounted_price
+    items.sum(&:discounted_price)
+  end
+
+  def base_price
+    items.sum(&:base_price)
   end
 
   def validate_unique_ids

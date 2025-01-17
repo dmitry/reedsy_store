@@ -84,7 +84,7 @@ class Api::V1::ProductsControllerTest < ActionDispatch::IntegrationTest
   # calculate
   test "checks price with valid items" do
     valid_items = [
-      { id: products(:mug).id, quantity: 2 },
+      { id: products(:mug).id, quantity: 3 },
       { id: products(:hoodie).id, quantity: 1 },
       { id: products(:tshirt).id, quantity: 5 }
     ]
@@ -96,10 +96,11 @@ class Api::V1::ProductsControllerTest < ActionDispatch::IntegrationTest
         "items" => [
           {
             "id" => products(:mug).id,
-            "quantity" => 2,
+            "quantity" => 3,
             "prices" => {
               "per_item" => "6.0",
-              "total" => "12.0"
+              "total" => "18.0",
+              "total_raw" => "18.0"
             }
           },
           {
@@ -107,7 +108,8 @@ class Api::V1::ProductsControllerTest < ActionDispatch::IntegrationTest
             "quantity" => 1,
             "prices" => {
               "per_item" => "20.0",
-              "total" => "20.0"
+              "total" => "20.0",
+              "total_raw" => "20.0"
             }
           },
           {
@@ -115,11 +117,13 @@ class Api::V1::ProductsControllerTest < ActionDispatch::IntegrationTest
             "quantity" => 5,
             "prices" => {
               "per_item" => "15.0",
-              "total" => "75.0"
+              "total" => "52.5",
+              "total_raw" => "75.0"
             }
           }
         ],
-        "total_price" => "107.0"
+        "discounted_total" => "90.5",
+        "base_total" => "113.0"
       },
       json
     )
@@ -128,9 +132,9 @@ class Api::V1::ProductsControllerTest < ActionDispatch::IntegrationTest
   test "returns errors for invalid items" do
     invalid_items = [
       { id: products(:mug).id, quantity: 2 },
-      { id: products(:mug).id, quantity: 1 },  # Duplicate product
+      { id: products(:mug).id, quantity: 1 }, # Duplicate product
       { id: products(:hoodie).id, quantity: 0 }, # Invalid quantity
-      { id: 0, quantity: 2 }  # Non-existent product
+      { id: 0, quantity: 2 } # Non-existent product
     ]
 
     post calculate_api_v1_products_url, params: { items: invalid_items }, as: :json
