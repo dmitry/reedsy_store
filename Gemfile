@@ -29,5 +29,7 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 end
 
-# TODO remove
-gem 'mutex_m'
+# RubyMine requirement for the latest release
+group :test do
+  gem "mutex_m"
+end

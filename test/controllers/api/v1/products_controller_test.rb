@@ -13,10 +13,10 @@ class Api::V1::ProductsControllerTest < ActionDispatch::IntegrationTest
     assert_equal %w[id code name price], product.keys
 
     @hoodie = products(:hoodie)
-    assert_equal @hoodie.id, product["id"]
-    assert_equal @hoodie.code, product["code"]
-    assert_equal @hoodie.name, product["name"]
-    assert_equal @hoodie.price.to_s, product["price"]
+    assert_equal product["id"], @hoodie.id
+    assert_equal product["code"], @hoodie.code
+    assert_equal product["name"], @hoodie.name
+    assert_equal product["price"], @hoodie.price.to_s
   end
 
   test "returns empty array when no products exist" do
@@ -44,16 +44,16 @@ class Api::V1::ProductsControllerTest < ActionDispatch::IntegrationTest
     json = response.parsed_body
     @mug = products(:mug)
     assert_equal(
-      json,
       {
         "id" => @mug.id,
         "code" => @mug.code,
         "name" => @mug.name,
         "price" => "10.88"
-      }
+      },
+      json
     )
 
-    assert_equal @mug.reload.price.to_s, "10.88"
+    assert_equal "10.88", @mug.reload.price.to_s
   end
 
   test "returns validation errors for product with wrong price" do
@@ -66,18 +66,85 @@ class Api::V1::ProductsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
 
     json = response.parsed_body
-    @mug = products(:mug)
     assert_equal(
-      json,
       {
         "errors" => {
           "price" => [
             "must be greater than 0"
           ]
         }
-      }
+      },
+      json
     )
 
-    assert_equal @mug.reload.price.to_s, "6.0"
+    @mug = products(:mug)
+    assert_equal "6.0", @mug.reload.price.to_s
+  end
+
+  # calculate
+  test "checks price with valid items" do
+    valid_items = [
+      { id: products(:mug).id, quantity: 2 },
+      { id: products(:hoodie).id, quantity: 1 },
+      { id: products(:tshirt).id, quantity: 5 }
+    ]
+    post calculate_api_v1_products_url, params: { items: valid_items }, as: :json
+    assert_response :success
+    json = response.parsed_body
+    assert_equal(
+      {
+        "items" => [
+          {
+            "id" => products(:mug).id,
+            "quantity" => 2,
+            "prices" => {
+              "per_item" => "6.0",
+              "total" => "12.0"
+            }
+          },
+          {
+            "id" => products(:hoodie).id,
+            "quantity" => 1,
+            "prices" => {
+              "per_item" => "20.0",
+              "total" => "20.0"
+            }
+          },
+          {
+            "id" => products(:tshirt).id,
+            "quantity" => 5,
+            "prices" => {
+              "per_item" => "15.0",
+              "total" => "75.0"
+            }
+          }
+        ],
+        "total_price" => "107.0"
+      },
+      json
+    )
+  end
+
+  test "returns errors for invalid items" do
+    invalid_items = [
+      { id: products(:mug).id, quantity: 2 },
+      { id: products(:mug).id, quantity: 1 },  # Duplicate product
+      { id: products(:hoodie).id, quantity: 0 }, # Invalid quantity
+      { id: 0, quantity: 2 }  # Non-existent product
+    ]
+
+    post calculate_api_v1_products_url, params: { items: invalid_items }, as: :json
+    assert_response :unprocessable_entity
+
+    assert_equal(
+      {
+        "errors" => {
+          "base" => [ "Products must be unique" ],
+          "items[2].quantity" => [ "must be greater than 0" ],
+          "items[3].product" => [ "can't be blank" ]
+        }
+      },
+      response.parsed_body
+    )
   end
 end

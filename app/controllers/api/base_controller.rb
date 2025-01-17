@@ -1,7 +1,7 @@
 module Api
   class BaseController < ActionController::API
     rescue_from ActiveRecord::RecordNotFound, with: :not_found_response
-    rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity_response
+    rescue_from ActiveRecord::RecordInvalid, ActiveModel::ValidationError, with: :unprocessable_entity_response
 
     private
 
@@ -11,7 +11,8 @@ module Api
     end
 
     def unprocessable_entity_response(exception)
-      render json: { errors: exception.record.errors.as_json },
+      record = exception.is_a?(ActiveRecord::RecordInvalid) ? exception.record : exception.model
+      render json: { errors: record.errors.as_json },
              status: :unprocessable_entity
     end
   end

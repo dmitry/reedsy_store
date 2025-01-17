@@ -2,14 +2,21 @@ class Product < ApplicationRecord
   validates :code,
             presence: true,
             uniqueness: true,
-            length: { maximum: 20 }
+            length: {
+              maximum: 20,
+              allow_blank: true
+            }
   validates :name,
             presence: true,
-            length: { maximum: 100 }
+            length: {
+              maximum: 100,
+              allow_blank: true
+            }
   validates :price,
             presence: true,
             numericality: {
-              greater_than: 0
+              greater_than: 0,
+              allow_blank: true
             }
 
   normalizes :code, with: -> { it.upcase }
