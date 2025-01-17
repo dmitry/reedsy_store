@@ -92,7 +92,7 @@ The default integer primary key was chosen over UUID for simplicity in this demo
 
 ### Product price calculation
 
-### ActiveModel implementation
+#### ActiveModel implementation
 
 The application uses ActiveModel extensively to handle complex calculations and validations outside of ActiveRecord models. Here's how and why:
 
