@@ -2,13 +2,13 @@ service: reedsy_store
 image: dmitry/reedsy_store
 servers:
   web:
-    - 192.168.0.1
+    - dmitry.eu
 proxy:
   ssl: true
-  host: app.example.com
+  host: store.reedsy.dmitry.eu
 
 registry:
-  username: dmitryZ
+  username: dmitry
   password:
     - KAMAL_REGISTRY_PASSWORD
 env:
