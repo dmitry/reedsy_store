@@ -4,26 +4,26 @@ Demo: https://reedsy-store.fly.dev/api/v1/products.json
 
 ## Setup Instructions
 
-Requirements
+### Requirements
 - Ruby 3.4+
 - SQLite3
 
-## Installation
+### Installation
 
-```aiignore
+```bash
 git clone <repository-url>
 cd reedsy-store
 bundle install
 rails db:setup
 ```
 
-## Running tests
+### Running Tests
 
 ```bash
 rails test
 ```
 
-## Running the server
+### Running the Server
 
 ```bash
 rails server
@@ -52,8 +52,6 @@ curl -X PATCH http://localhost:3000/api/v1/products/1 \
 #### POST /api/v1/products/calculate
 Calculates total price with discounts.
 
-[Look more](#question-4) for the other examples.
-
 ```bash
 curl -X POST http://localhost:3000/api/v1/products/calculate \
   -H "Content-Type: application/json" \
@@ -65,17 +63,16 @@ curl -X POST http://localhost:3000/api/v1/products/calculate \
   }'
 ```
 
-# Technical decisions
+## Technical Design
 
-## Architecture decisions
+### Architecture Decisions
 
-### Product model
-
+#### Product Model
 The application implements model-level validations without additional database constraints. Since all interactions happen through the Rails application layer, model validations provide sufficient data consistency. This approach keeps the implementation simple while maintaining data integrity.
 
 Code normalization is implemented at the model level by converting to uppercase. This ensures consistent code format and simplifies uniqueness validation at both application and database levels.
 
-The price attribute is implemented as a decimal with 2 decimal points, suitable for EUR/USD currencies. For a production system with multiple currencies, the `money-rails` gem would be the preferred choice. This battle-tested solution handles various currency types effectively, including:
+The price attribute is implemented as a decimal with 2 decimal points, suitable for EUR/USD currencies. For a production system with multiple currencies, the `money-rails` gem would be the preferred choice. This battle-tested solution handles various currency types effectively:
 - Currencies with and without cents
 - Cryptocurrencies
 - Historical exchange rates
@@ -92,14 +89,10 @@ The default integer primary key was chosen over UUID for simplicity in this demo
 - Simplified database merging
 - Prevention of ID collisions
 
-### Product price calculation
-
-### ActiveModel implementation
-
+#### Product Price Calculation
 The application uses ActiveModel extensively to handle complex calculations and validations outside of ActiveRecord models. Here's how and why:
 
-#### Calculation logic with ActiveModel
-
+##### Calculation Logic with ActiveModel
 The calculation logic is implemented using two main classes:
 - `Product::Calculation` - Handles the overall price calculation for a cart
 - `Product::CalculationItem` - Represents individual items in the calculation
@@ -111,40 +104,99 @@ This separation using ActiveModel provides several benefits:
 4. Makes the code more testable with clear responsibilities
 
 The ActiveModel implementation was designed to be extensible for future needs:
-- Easy to add new discount types
-- Flexible for additional pricing rules
+- Easy and flexible to add new discount types
 - Simple to add new validation contexts
 - Ready for potential persistence if needed
 
-### API implementation
+## API Structure
 
-#### Security considerations
+### Namespace Organization
+The API uses versioned namespaces to ensure backward compatibility and clean upgrade paths:
 
-**Authentication**: The product price update endpoint (`PATCH /api/v1/products/:id/update`) would typically require authentication and admin-level authorization in a production environment. However, as per assessment requirements, authentication implementation is skipped.
+- `Api::BaseController`: Common functionality for all API versions
+  - Centralized error handling
+  - Common response formats
+  - Shared authentication (when implemented)
 
-**CORS**: Origin access is restricted at the Cloudflare/proxy level, with specific allowed origins configured. The application itself implements minimal CORS settings.
+- `Api::V1`: First version of the API
+  - Isolated from future versions
+  - Own set of serializers and validations
+  - Can be deprecated while maintaining support
+  - Might be good to add `Api::V1::BaseController`
 
-**Rate limiting**: Implemented through Cloudflare/HTTPS server rate limiting rules rather than application-level middleware.
+### Error Handling
 
-**Security headers**: Implemented at proxy level:
-- X-Frame-Options: DENY - Prevents iframe embedding
-- X-Content-Type-Options: nosniff - Prevents MIME type sniffing
-- Strict-Transport-Security: max-age=31536000 - Enforces HTTPS
-- Content-Security-Policy - Controls resource loading
-- X-XSS-Protection: 1; mode=block - Additional XSS protection
-- Referrer-Policy: strict-origin-when-cross-origin - Controls referrer information
+#### Response Format
+All error responses follow a consistent structure:
+
+```json
+{
+  "errors": {
+    "field_name": ["error message"],
+    "base": ["error message"]
+  }
+}
+```
+
+#### HTTP Status Codes
+- `400 Bad Request`: Malformed request syntax
+- `404 Not Found`: Resource not found
+- `422 Unprocessable Entity`: Validation errors
+- `500 Internal Server Error`: Server-side errors
+
+#### Validation Error Examples
+
+Product not found:
+```json
+{
+  "error": "Couldn't find Product with id=0"
+}
+```
+
+Invalid price update:
+```json
+{
+  "errors": {
+    "price": ["must be greater than 0"]
+  }
+}
+```
+
+Invalid calculation request (with indexes):
+```json
+{
+  "errors": {
+    "base": ["Products must be unique"],
+    "items[0].quantity": ["must be greater than 0"],
+    "items[1].product": ["can't be blank"]
+  }
+}
+```
+
+#### Security Considerations
+The API implements several security measures at different levels:
+
+- **Authentication**: The product price update endpoint would typically require authentication and admin-level authorization in a production environment. However, as per requirements, authentication implementation is skipped.
+
+- **CORS**: Origin access is restricted at the Cloudflare/proxy level, with specific allowed origins configured.
+
+- **Rate Limiting**: Implemented through Cloudflare/HTTPS server rate limiting rules rather than application-level middleware.
+
+- **Security headers**: Implemented at proxy level:
+  - X-Frame-Options: DENY - Prevents iframe embedding
+  - X-Content-Type-Options: nosniff - Prevents MIME type sniffing
+  - Strict-Transport-Security: max-age=31536000 - Enforces HTTPS
+  - Content-Security-Policy - Controls resource loading
+  - X-XSS-Protection: 1; mode=block - Additional XSS protection
+  - Referrer-Policy: strict-origin-when-cross-origin - Controls referrer information
 
 #### Serialization
-
 Product serialization uses the basic `as_json` method for simplicity. Alternative approaches that could be considered for a larger application include:
 - JBuilder templates
 - Active Model Serializers
 - Grape Entity
 
-These alternatives would provide more structured and maintainable serialization as the API grows.
-
-#### Error handling
-
+#### Error Handling
 The API implements centralized error handling in the BaseController to ensure consistent error responses across all endpoints:
 
 ```ruby
@@ -158,8 +210,7 @@ This approach:
 - Makes error handling more maintainable
 - Ensures consistent HTTP status codes (404 for not found, 422 for validation errors)
 
-### Testing approach
-
+### Testing Strategy
 The testing strategy employs fixtures for data setup. While suitable for this simple application, factory_bot would be preferred in a production environment due to:
 - More flexible test data creation
 - Support for complex object relationships
@@ -173,25 +224,22 @@ Minitest was chosen for its simplicity and Rails integration. For a production a
 - Extensive matcher library
 - Strong community support
 
-## Design principles
-
-The implementation follows these key principles:
+## Design Principles
 1. Simplicity over premature optimization
 2. Standard Rails conventions where possible
 3. Minimal external dependencies
 4. Focus on maintainability
 5. Preparation for future scaling where it doesn't add significant complexity
 
-## Preferred production stack
-
+## Preferred Production Stack
 For a production-ready application, the following stack would be chosen:
 
-- **Database**: PostgreSQL with UUID primary keys for scalability and better data distribution
+- **Database**: PostgreSQL with UUID primary keys
 - **Background Jobs**: Sidekiq (or good_job for single-database setups)
-- **Pagination**: Pagy for its performance and simplicity
-- **Authentication**: JWT tokens or HTTP-only cookies depending on the client requirements
-- **API Layer**: Grape (with built-in documentation) or GraphQL for complex data relationships
-- **Testing**: RSpec + factory_bot for comprehensive test coverage
+- **Pagination**: Pagy for performance and simplicity
+- **Authentication**: JWT tokens or HTTP-only cookies
+- **API Layer**: Grape (with documentation) or GraphQL
+- **Testing**: RSpec + factory_bot
 - **Monitoring**: Sentry
 - **Documentation**: Swagger/OpenAPI for REST or GraphiQL for GraphQL
 

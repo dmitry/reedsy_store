@@ -7,7 +7,6 @@ products_data = [
 unless Product.exists?
   products_data.each do |attributes|
     Product.find_or_create_by!(code: attributes[:code]) do |product|
-      p attributes
       product.attributes = attributes
     end
   end
