@@ -25,4 +25,4 @@ console_command = '/rails/bin/rails console'
 
 [mounts]
   source="sqlite_data"
-  destination="/mnt/sqlite"
+  destination="/data"
