@@ -60,7 +60,8 @@ RUN groupadd --system --gid 1000 rails && \
     chown -R rails:rails db log storage tmp
 USER 1000:1000
 
-RUN ln -s /data/production.sqlite3 /app/db/production.sqlite3
+RUN [ ! -f /data/production.sqlite3 ] && touch /data/production.sqlite3 && \
+    ln -sf /data/production.sqlite3 /rails/db/production.sqlite3
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
