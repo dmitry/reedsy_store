@@ -60,13 +60,9 @@ RUN groupadd --system --gid 1000 rails && \
     chown -R rails:rails db log storage tmp
 USER 1000:1000
 
-RUN mkdir /data
-RUN [ ! -f /data/production.sqlite3 ] && touch /data/production.sqlite3 && \
-    ln -sf /data/production.sqlite3 /rails/db/production.sqlite3
-
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start server via Thruster by default, this can be overwritten at runtime
-EXPOSE 80
-CMD ["./bin/thrust", "./bin/rails", "server"]
+EXPOSE 3000
+CMD ["./bin/thrust", "./bin/rails", "server", "-b", "0.0.0.0"]
