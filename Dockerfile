@@ -60,6 +60,7 @@ RUN groupadd --system --gid 1000 rails && \
     chown -R rails:rails db log storage tmp
 USER 1000:1000
 
+RUN mkdir /data
 RUN [ ! -f /data/production.sqlite3 ] && touch /data/production.sqlite3 && \
     ln -sf /data/production.sqlite3 /rails/db/production.sqlite3
 
