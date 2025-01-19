@@ -1,5 +1,7 @@
 # Reedsy Store
 
+Demo: https://reedsy-store.fly.dev/api/v1/products.json
+
 ## Setup Instructions
 
 ### Requirements

@@ -1,5 +1,5 @@
 class Product < ApplicationRecord
-  has_many :discounts, class_name: 'ProductDiscount', dependent: :destroy
+  has_many :discounts, class_name: "ProductDiscount", dependent: :destroy
 
   validates :code,
             presence: true,
