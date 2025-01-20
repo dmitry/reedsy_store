@@ -28,7 +28,6 @@ rails test
 1. Start the server: `rails s`
 2. Access local API: `open http://localhost:3000`
 3. View logs: `tail -f log/development.log`
-```
 
 ### Deployment
 
@@ -36,7 +35,8 @@ The application is currently deployed on Fly.io. Deployment steps:
 
 ```
 curl -L https://fly.io/install.sh | sh
-fly deplo
+fly deploy
+```
 
 ## API Documentation
 
