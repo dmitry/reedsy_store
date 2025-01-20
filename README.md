@@ -11,8 +11,8 @@ Demo: https://reedsy-store.fly.dev/api/v1/products.json
 ### Installation
 
 ```bash
-git clone <repository-url>
-cd reedsy-store
+git clone git@github.com:dmitry/reedsy_store.git
+cd reedsy_store
 bundle install
 rails db:setup
 ```
@@ -23,11 +23,20 @@ rails db:setup
 rails test
 ```
 
-### Running the Server
+### Local Development Workflow
 
-```bash
-rails server
+1. Start the server: `rails s`
+2. Access local API: `open http://localhost:3000`
+3. View logs: `tail -f log/development.log`
 ```
+
+### Deployment
+
+The application is currently deployed on Fly.io. Deployment steps:
+
+```
+curl -L https://fly.io/install.sh | sh
+fly deplo
 
 ## API Documentation
 
@@ -122,7 +131,7 @@ The API uses versioned namespaces to ensure backward compatibility and clean upg
   - Isolated from future versions
   - Own set of serializers and validations
   - Can be deprecated while maintaining support
-  - Might be good to add `Api::V1::BaseController`
+  - It might be good to add `Api::V1::BaseController`
 
 ### Error Handling
 
@@ -431,3 +440,5 @@ curl -X POST "http://localhost:3000/api/v1/products/calculate" \
     ]
   }'
 ```
+
+Once the challenge will be over, this repository will be moved to the private.
