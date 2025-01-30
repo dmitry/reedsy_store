@@ -8,7 +8,7 @@ class Product::Calculation
   validate :validate_items
 
   def initialize(items)
-    @items = items.map { Product::CalculationItem.new(it) }
+    @items = items_with_products(items) { Product::CalculationItem.new(it) }
   end
 
   def result
@@ -22,6 +22,19 @@ class Product::Calculation
   end
 
   private
+
+  def items_with_products(items)
+    ids = items.map { it[:id] }
+    products = products_with_discounts(ids)
+    items.map { yield(it.merge(product: products[it[:id]])) }
+  end
+
+  def products_with_discounts(ids)
+    Product
+      .eager_load(:discounts)
+      .where(id: ids)
+      .index_by(&:id)
+  end
 
   def discounted_price
     items.sum(&:discounted_price)

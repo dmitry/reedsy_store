@@ -2,6 +2,8 @@ class Product::CalculationItem
   include ActiveModel::Model
   include ActiveModel::Attributes
 
+  attr_accessor :product
+
   attribute :id, :integer
   attribute :quantity, :integer
 
@@ -10,14 +12,6 @@ class Product::CalculationItem
             presence: true,
             numericality: { greater_than: 0, allow_blank: true }
   validates :product, presence: true
-
-  def initialize(item)
-    super
-  end
-
-  def product
-    @product ||= Product.find_by(id: id)
-  end
 
   def discounted_price
     @discounted_price ||= discounted_price_without_cache
@@ -44,12 +38,18 @@ class Product::CalculationItem
   def discounted_price_without_cache
     return 0 unless product
 
-    discount = product.discount_for_quantity(quantity)
-
     if discount
       base_price * (1 - discount.percentage / 100.0)
     else
       base_price
     end
+  end
+
+  def discount
+    @discount ||= product.discounts.sort_by(&:min_quantity).reverse.find { it.min_quantity <= quantity }
+  end
+
+  def product
+    @product ||= Product.find_by(id: id)
   end
 end
